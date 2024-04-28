@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: 
   html_document: 
     code_folding: hide
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +21,7 @@ library(kableExtra)
 
 ```
 
-(All code should be written according to a Style Guide of your choice. List this Style Guide as a code comment in your first code chunk)
+The code style that we chose was BigCamelCase
 
 # Topic
 
@@ -28,12 +29,12 @@ For our project, we are using two NFL Data sets. We chose to have our project be
 
 # Investigation
 
-### For the defense data, we are investigating:
+## For the defense data, we are investigating:
 How each statistic varies by position?
 
 What positions lead in what stats?
 
-### For the Quarterback data, we are investigating: 
+## For the Quarterback data, we are investigating: 
 How do Quarterbacks stats compare between eras?
 
 What Quarterback had the best season?
@@ -44,7 +45,6 @@ This data set is from Pro Football Reference. The purpose of this data set is th
 
 ```{r}
 DefenseStats <- read_excel("2023 NFL Defense Stats.xlsx") 
-View(DefenseStats)
 ```
 
 
@@ -412,17 +412,190 @@ Overall, linebackers lead in most of the statistics and defensive ends have the 
 
 # Quarterback Data Set
 
-This data set is from kaggle.
-
-
+This data set is from kaggle, and is every Quarterback season from 1970 to 2022. It shows different stats from the season including Passing Yards, Touchdowns, and Interceptions. However, there are many more stats included in the table that I did not feel were important for comparison
+```{r}
+Stats <- read_excel("NFL QB Stats.xlsx")
+```
 # Quarterback Data Set Wrangling
 
+For the Quarterbacks table there was quite a bit of wrangling of all sorts done. I began by selecting the top 20 quarterbacks by passing yards per year to factor out human variability, and Quarterback injuries during the season. Then the rest of the wrangling is separated into two categories, Yards and Points. 
 
+```{r}
+#Takes top 20 QBs by year
+Starters <- Stats%>%
+  group_by(Year)%>%
+  arrange(desc(`Pass Yds`))%>%
+  filter(row_number()<21)%>%
+  arrange(desc(Year))
+```
 
-# Quarterback Data Table
+## Yards Wrangling
 
+Many people discuss greatness of a Quarterbacks by putting most of their emphasis on the yards the Quarterback threw for. The first wrangling I did for the yards was create an average passing yards per year and merged the table onto the previously starters table. I then added the number of games played in a year, because since 1970 the number of games played in a year has changed twice, and that knowledge is necessary for comparisons. After adding the statistics for clarification, the main stat of Average Passing Yards+, a standardized statistic for passing yars per year, is created and added onto the starters table.
 
+```{r yards, warning=FALSE}
+#Gets a table of yearly avergae passing yards
+Era<- Starters%>%
+  group_by(Year)%>%
+  filter(Year != 1982)%>%
+  summarise(`Year Mean` = mean(`Pass Yds`))
+#Adds number of games to seasons
+Temp<-Era%>%
+  mutate(`Games per Year` = if_else(Year<1982,"14 Games","16 Games"))
+Temp2<-replace(Temp$`Games per Year`,Temp$Year>2020,"17 Games")
+# Adds the number of games to Era
+NewEra<-Era%>%
+  mutate(`Games per Year` = Temp2)
+#Merges the Era table to the starters table
+MergedYards<-merge(x= Starters, y = Era, by = "Year", all.x = T)%>%
+  select(Year,Player, `Pass Yds`, TD, INT, `Year Mean`)
+#Creates the APY+ stats, and adds it to the table
+AdjYards<- MergedYards%>%
+  summarise(Year = as.character(Year), Player = Player, TD = TD, INT= INT,`APY (Average Passing Yards)` = `Year Mean` ,Yards = `Pass Yds`, `APY+` = round(100*(`Pass Yds`/`Year Mean`),0))%>%
+arrange(desc(`APY+`))
+```
+## Points Wrangling
+
+The points variable created is a better way to compare Quarterbacks over the years by more stats than just passing yards. For points, each yard is a point, each touchdown is 100 points, and each interception is -50 points. The rest of the steps of the points data wrangling is the exact same process as above, but rather than the main stat of comparison being the passing yards stat, it is for the newly created points stat.
+
+```{r points, warning=FALSE}
+#Adds a points column to the starters table
+Points<-Starters%>%
+  group_by(Year)%>%
+  reframe(Year = Year, Player = Player, Yards = `Pass Yds`,TD = TD, INT = INT, Points = ((`Pass Yds`)+(TD*100)-(INT*50)))
+#Gets the yearly average for points
+EraPoints<- Points%>%
+  group_by(Year)%>%
+  filter(Year != 1982)%>%
+  summarise(`Year Mean` = mean(Points))
+#Add the games per season to table 
+NewEraPoints<-EraPoints%>%
+  mutate(`Games per Year` = Temp2)
+#Adds the average points to the end of the points table
+MergedPoints<-merge(x= Points, y = NewEraPoints, by = "Year", all.x = T)%>%
+  select(Year,Player, Points, TD, INT, `Year Mean`,`Games per Year`)
+#Creates the AP+ stat and final table
+AdjPoints<- MergedPoints%>%
+  summarise(Year = as.character(Year), Player = Player, TD = TD, INT =INT,`AP (Average Points)` = `Year Mean` 
+            ,Points = Points, `AP+` = round(100*(Points/`Year Mean`),0),`Games per Year`= `Games per Year`)%>%
+  arrange(desc(`AP+`))
+```
+
+# Quarterback Data Tables
+
+The created tables are the best era adjusted Quarterbacks of all time. I selected the top 5 based on the created Average Passing Yards+, APY+, and the Average Points+, AP+. The difference in the tables is the main reason why you cannot strictly focus on passing yards like some people in debates do. The top APY+ does not align with the top AP+ players showing the importance of the other stats that Quarterbacks have.
+
+## Average Passing Yards+
+
+```{r}
+AdjYardTable<- AdjYards%>%
+  select(Year, Player, TD, INT ,`APY+`)
+head(AdjYardTable,5)%>%
+  kable(caption = "Best APY+ since 1970",
+        align = c("l", rep("c", 10))) %>%
+  kable_styling(      
+    bootstrap_options = c("striped"),      
+    font_size = 16)
+```
+## Average Points+
+```{r}
+AdjPointTable<- AdjPoints%>%
+  select(Year, Player, TD, INT ,`AP+`)
+head(AdjPointTable,5)%>%
+  kable(caption = "Best AP+ since 1970",
+        align = c("l", rep("c", 10))) %>%
+  kable_styling(      
+    bootstrap_options = c("striped"),      
+    font_size = 16)
+```
 
 # Quarterback Data Visualizations
+
+The created visualizations can show why it is so difficult to compare players between eras, and can show who the most effective players were in the each statistical category. After that the best APY+ and AP+ players will be selected side by side in a bar plot and compared.
+
+## Era comparisons
+
+The first visualizations that need to be seen are the year to year comparison of average passing yards and points per year to see why it is so difficult to compare players from different eras. As seen from the tables below the average from 1970 to 2022 has over doubled, and a good season from the 1970s would be a horrible season by today's standards. This is the reason it is so difficult to compare players that did not play at the same time.
+
+### Average yards per season
+```{r}
+#Creates APY+ plot
+ggplot(NewEra) +
+  aes(x = Year, y = `Year Mean`, colour = `Games per Year`) +
+  geom_point(shape = "circle", size = 2L) +
+  scale_color_brewer(palette = "Set1", direction = 1) +
+  labs(x = "Year", y = "Average Passing Yards") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 30L,
+                              hjust = 0.5),
+    axis.title.y = element_text(size = 14L),
+    axis.title.x = element_text(size = 14L)
+  )
+```
+
+### Average points per season
+```{r}
+#Creates AP+ per year plot
+ggplot(NewEraPoints) +
+  aes(x = Year, y = `Year Mean`, colour = `Games per Year`) +
+  geom_point(shape = "circle", size = 2L) +
+  scale_color_brewer(palette = "Set1", direction = 1) +
+  labs(x = "Year", y = "Average Points") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 30L,
+                              hjust = 0.5),
+    axis.title.y = element_text(size = 14L),
+    axis.title.x = element_text(size = 14L)
+  )
+```
+
+## Best Players comparisons
+
+These Data visualizations will take the Data Tables from above, and show the visualization through a bar plot.
+
+### Average Passing Yards+
+```{r}
+#Creates best APY+ visualization
+ggplot(head(AdjYardTable, 5)) +
+  aes(x = Year, y = `APY+`, fill = Player) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set1", direction = 1) +
+  labs(
+    x = "Year",
+    y = "APY+",
+    title = "Best APY+ since 1970",
+    fill = "Name"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 30L),
+    axis.title.y = element_text(size = 14L),
+    axis.title.x = element_text(size = 14L)
+  )
+```
+
+### Average Points+
+```{r}
+#Creates Visualization for AP+
+ggplot(head(AdjPointTable, 5)) +
+  aes(x = Year, y = `AP+`, fill = Player) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set1", direction = 1) +
+  labs(
+    x = "Year",
+    y = "AP+",
+    title = "Best AP+ since 1970",
+    fill = "Name"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 30L),
+    axis.title.y = element_text(size = 14L),
+    axis.title.x = element_text(size = 14L)
+  )
+```
+
 
 
