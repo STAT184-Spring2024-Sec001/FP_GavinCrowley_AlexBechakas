@@ -2,7 +2,9 @@
 title: "STAT 184 Final Project"
 author: "Gavin Crowley and Alex Bechakas"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -26,12 +28,14 @@ For our project, we are using two NFL Data sets. We chose to have our project be
 
 # Investigation
 
-## For the defense data, we are investigating:
+### For the defense data, we are investigating:
 How each statistic varies by position?
+
 What positions lead in what stats?
 
-## For the Quarterback data, we are investigating: 
+### For the Quarterback data, we are investigating: 
 How do Quarterbacks stats compare between eras?
+
 What Quarterback had the best season?
 
 # Defense Data Set 
@@ -39,7 +43,7 @@ What Quarterback had the best season?
 This data set is from Pro Football Reference. The purpose of this data set is that it contains the defensive statistics for all players who recorded at least 1 defensive stat in the 2023/24 NFL Season. A case in this data set is a individual player. Our analysis of the defense data set will focus on most of the attributes. Those attributes include: Position, G, GS, Int, TD, PD, FF, FR, Sk, Comb, Solo, Ast, TFL, QBHits, and Sfty.
 
 ```{r}
-DefenseStats <- read_excel("Penn State/STAT 184/Final Project/FP_GavinCrowley_AlexBechakas/2023 NFL Defense Stats.xlsx")
+DefenseStats <- read_excel("2023 NFL Defense Stats.xlsx") 
 View(DefenseStats)
 ```
 
