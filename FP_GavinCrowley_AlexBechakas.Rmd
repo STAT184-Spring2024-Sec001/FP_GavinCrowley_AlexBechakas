@@ -5,7 +5,6 @@ date: "`r Sys.Date()`"
 output: 
   html_document: 
     code_folding: hide
-    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +20,7 @@ library(kableExtra)
 
 ```
 
-The code style that we chose was BigCamelCase
+The code style that we chose was BigCamelCase.
 
 # Topic
 
@@ -29,12 +28,12 @@ For our project, we are using two NFL Data sets. We chose to have our project be
 
 # Investigation
 
-## For the defense data, we are investigating:
+### For the defense data, we are investigating:
 How each statistic varies by position?
 
 What positions lead in what stats?
 
-## For the Quarterback data, we are investigating: 
+### For the Quarterback data, we are investigating: 
 How do Quarterbacks stats compare between eras?
 
 What Quarterback had the best season?
@@ -44,6 +43,7 @@ What Quarterback had the best season?
 This data set is from Pro Football Reference. The purpose of this data set is that it contains the defensive statistics for all players who recorded at least 1 defensive stat in the 2023/24 NFL Season. A case in this data set is a individual player. Our analysis of the defense data set will focus on most of the attributes. Those attributes include: Position, G, GS, Int, TD, PD, FF, FR, Sk, Comb, Solo, Ast, TFL, QBHits, and Sfty.
 
 ```{r}
+# Import data set
 DefenseStats <- read_excel("2023 NFL Defense Stats.xlsx") 
 ```
 
@@ -56,9 +56,13 @@ Grouped all the data by position so the table would have one row for each positi
 
 ```{r}
 DefS <- DefenseStats %>%
+  # Select wanted statistics
   select(Position,G,GS,Int,TD,PD,FF,FR,Sk,Comb,Solo,Ast,TFL,QBHits, Sfty)
+# Select defensive positions so the offensive positions are not included
 DefS <- DefS %>% filter (Position %in% c("DT", "DE", "LB", "CB", "S"))
+# Group by position
 DefS <- DefS %>% group_by(Position) %>%
+  # Creates totals of each stat for each position
   summarize(
     Games = sum(G),
     Games_Started = sum(GS),
@@ -82,14 +86,19 @@ DefS <- DefS %>% group_by(Position) %>%
 # Defense Data Table
 
 ```{r}
+# Data table
 DefS %>%
   kable(
+    # Title
     caption = "Statistic Totals for Each NFL Position",  
-    booktabs = TRUE,                        
+    booktabs = TRUE,   
+    # Alignment
     align = rep("c", 11)           
   ) %>%
   kable_styling(      
-    bootstrap_options = c("striped"),     
+    # Table style
+    bootstrap_options = c("striped"),  
+    # Font size
     font_size = 16
   )
 ```
@@ -103,13 +112,17 @@ For the Defense Data, we created 14 data visualizations. Each data visualization
 
 ```{r}
 ggplot(DefS) +
+  # Variables
   aes(x = Position, y = Games) +
+  # Bar color
   geom_col(fill = "#212221") +
+  # Labels
   labs(
     x = "Position",
     y = "Games",
     title = "Total Games by Position for the 2023/2024 NFL Season"
   ) +
+  # Theme
   theme_light() +
   theme(
     plot.title = element_text(size = 15L,
@@ -362,7 +375,7 @@ ggplot(DefS) +
   )
 ```
 
-This graph shows that blank lead in blank and blank have the least blank
+This graph shows that linebackers lead in tackles for loss and safeties have the least tackles for loss.
 
 ## QB Hits Graph
 
@@ -412,7 +425,7 @@ Overall, linebackers lead in most of the statistics and defensive ends have the 
 
 # Quarterback Data Set
 
-This data set is from kaggle, and is every Quarterback season from 1970 to 2022. It shows different stats from the season including Passing Yards, Touchdowns, and Interceptions. However, there are many more stats included in the table that I did not feel were important for comparison
+This data set is from kaggle, and is every Quarterback season from 1970 to 2022. It shows different stats from the season including Passing Yards, Touchdowns, and Interceptions. However, there are many more stats included in the table that I did not feel were important for comparison.
 ```{r}
 Stats <- read_excel("NFL QB Stats.xlsx")
 ```
