@@ -45,6 +45,7 @@ This data set is from Pro Football Reference. The purpose of this data set is th
 ```{r}
 # Import data set
 DefenseStats <- read_excel("2023 NFL Defense Stats.xlsx") 
+View(DefenseStats)
 ```
 
 
@@ -428,6 +429,7 @@ Overall, linebackers lead in most of the statistics and defensive ends have the 
 This data set is from kaggle, and is every Quarterback season from 1970 to 2022. It shows different stats from the season including Passing Yards, Touchdowns, and Interceptions. However, there are many more stats included in the table that I did not feel were important for comparison.
 ```{r}
 Stats <- read_excel("NFL QB Stats.xlsx")
+View(Stats)
 ```
 # Quarterback Data Set Wrangling
 
